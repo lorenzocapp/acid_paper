@@ -5,7 +5,7 @@ library(diagL1)
 
 idx <- 1
 #sample data
-n <- 50
+n <- 150
 
 u <- runif(n)
 y <- rnorm(n,-2,1)
@@ -23,16 +23,16 @@ characteristics <- data.frame(M=M,B=B)
 #xmin=-8
 #xmax=8
 #ngrid=200
-grid <- seq(-10,10.95,0.05)*sd(y)+mean(y) #it is an automatic grid, so the Gaussian copula is identical
+grid <- seq(-4,3.95,0.05)*sd(y)+mean(y) #it is an automatic grid, so the Gaussian copula is identical
 true <- 0.8*dnorm(grid,-2,1)+0.2*dnorm(grid,2,1)
 
 
 
 #Run
 M <- 500
-h <- initialization_kernel_resampling(y,M,bw="nrd")
-posterior <- ps_posterior(y,grid,h,M,B,kernel="laplace")
-plot_ps_posterior(grid,posterior,true,xlim=c(-6,6))
+h <- initialization_kernel_resampling(y,M,bw="SJ")
+posterior <- ps_posterior(y=y,grid=grid,h=h,M=M,B=B,kernel="laplace")
+plot_ps_posterior(grid,posterior,true)
 
 #h0=h[1]
 #hist(y,breaks=50,freq=FALSE)
@@ -74,7 +74,7 @@ y <- as.matrix(y)
 check <- run_copula_algo(y,100,100,n)
 
 np <- import("numpy")
-mat <- np$load("output/trial.npy")
+mat <- np$load("output/out_python_1.npy")
 mat <- np$matrix(exp(mat))/sd(y)
 
 

@@ -92,22 +92,27 @@ recursive_kernel <- function(y,grid,h,kernel="gaussian",ps=TRUE,M=1000){
   if (kernel=="gaussian"){
     f <- dnorm((grid-y[1])/h[1])/h[1]
     for (i in 2:length(y)){
-      f <- (1-i^(-1))*f + i^(-1)/h[i]* dnorm((grid-y[i])/h[i])
+      #f <- (1-i^(-1))*f + i^(-1)/h[i]* dnorm((grid-y[i])/h[i])
+      f <- f + 1/h[i]* dnorm((grid-y[i])/h[i])
       #Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
       #f <- f/Z
     }
   } else if (kernel=="uniform"){
     f <- dunif(grid,min=y[1]-h[1],max=y[1]+h[1])
     for (i in 2:length(y)){
-      f <- (1-i^(-1))*f + i^(-1)*dunif(grid,min=y[i]-h[i],max=y[i]+h[i])
+      #f <- (1-i^(-1))*f + i^(-1)*dunif(grid,min=y[i]-h[i],max=y[i]+h[i])
+      f <- f + dunif(grid,min=y[i]-h[i],max=y[i]+h[i])
       #Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
       #f <- f/Z
     }
   } else if (kernel=="laplace"){
     #h <- 1.1*h #inflate the kernel for Laplace
-    f <- dlaplace(grid,location=y[1],scale=h[1])
+    #f <- dlaplace(grid,location=y[1],scale=h[1])
+    f <- exp(-abs(grid - y[1]) / h[1])/(2 * h[1])
     for (i in 2:length(y)){
-      f <- (1-i^(-1))*f + i^(-1)*dlaplace(grid,location=y[i],scale=h[i])
+      #f <- (1-i^(-1))*f + i^(-1)*dlaplace(grid,location=y[i],scale=h[i])
+      #f <- f + dlaplace(grid,location=y[i],scale=h[i])
+      f <- f + exp(-abs(grid - y[i]) / h[i])/(2 * h[i])
     }
     #we adjust to make it sum to one at the end
     #Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
@@ -115,12 +120,13 @@ recursive_kernel <- function(y,grid,h,kernel="gaussian",ps=TRUE,M=1000){
   } else {
     print("Kernel not yet implemented!")
   }  
+  f <- f/length(y)
   return(f)
 }
 
 
 
-standard_kernel <- function(y,grid,h,kernel="gaussian",bw="nrd",ps=TRUE,M=1000){
+standard_kernel <- function(y,grid,h,kernel="gaussian",ps=TRUE,M=1000,bw="nrd"){
   
   'Implement the kernel standard estimator (unless it is Gaussian, since it already exists): it can generate predictive resampling samples!'
   
@@ -154,14 +160,15 @@ laplace_kde <- function(y,grid,h0) {
   "Implements a standard Kde"
   
   # laplace kernel function
-  f <- dlaplace(grid,location=y[1],scale=h0)
+  f <- exp(-abs(grid - y[1]) / h0)/(2 * h0)
   for (i in 2:length(y)){
-    f <- (1-i^(-1))*f + i^(-1)*dlaplace(grid,location=y[i],scale=h0)
+    #f <- (1-i^(-1))*f + i^(-1)*exp(-abs(grid - y[i]) / h0)/(2 * h0)
+    f <- f + exp(-abs(grid - y[i]) / h0)/(2 * h0)
   }
   #adjust to make it sum to one at the end
-  Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
-  f <- f/Z
-
+  #Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
+  #f <- f/Z
+  f <- f/length(y)
   return(f)
 }
 
@@ -172,10 +179,12 @@ uniform_kde <- function(y,grid,h0) {
   # uniform kernel function
   f <- dunif(grid,min=y[1]-h0,max=y[1]+h0)
   for (i in 2:length(y)){
-    f <- (1-i^(-1))*f + i^(-1)*dunif(grid,min=y[i]-h0,max=y[i]+h0)
-    Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
-    f <- f/Z
+    #f <- (1-i^(-1))*f + i^(-1)*dunif(grid,min=y[i]-h0,max=y[i]+h0)
+    f <- f + dunif(grid,min=y[i]-h0,max=y[i]+h0)
+    #Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
+    #f <- f/Z
   }
+  f <- f/length(y)
   return(f)
 }
 
@@ -187,10 +196,12 @@ gaussian_kde <- function(y,grid,h0) {
   # Gaussian kernel function
   f <- dnorm((grid-y[1])/h0)/h0
   for (i in 2:length(y)){
-    f <- (1-i^(-1))*f + i^(-1)/h0* dnorm((grid-y[i])/h0)
-    Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
-    f <- f/Z
+    #f <- (1-i^(-1))*f + i^(-1)/h0* dnorm((grid-y[i])/h0)
+    f <- f + 1/h0* dnorm((grid-y[i])/h0)
+    #Z <- (grid[2]-grid[1])/2*(2*sum(f)-f[1]-f[length(f)])
+    #f <- f/Z
   }
+  f <- f/length(y)
   return(f)
 }
 
@@ -210,9 +221,11 @@ ps_posterior <- function(y,grid,h,M=1000,B=100,kernel="gaussian",algo="recursive
       posterior[b,] <- recursive_kernel(y,grid,h,kernel,ps=TRUE,M)
     }
   } else if (algo=="standard"){
-    for (b in 1:B){
-      posterior[b,] <- standard_kernel(y,grid,h,kernel,M,bw,ps=TRUE,)
+    for (b in 1:B){               
+      posterior[b,] <- standard_kernel(y,grid,h,kernel,ps=TRUE,M,bw)
     }
+  } else {
+    print("which estimator you want to use?")
   }
   
   
