@@ -24,6 +24,11 @@ def run_copula_algo(y):
     print('Bandwidth is {}'.format(copula_density_obj.rho_opt))
     print('Preq loglik is {}'.format(copula_density_obj.preq_loglik))
 
+    #small modifications: we prevent the bandiwdith to generate
+    #copula_density_obj.rho_opt = jnp.minimum(copula_density_obj.rho_opt, 0.4)
+    rho_new = jnp.maximum(copula_density_obj.rho_opt, 0.4)
+    copula_density_obj = copula_density_obj._replace(rho_opt=rho_new)
+    print('New Bandwidth is {}'.format(copula_density_obj.rho_opt))
     #Predict on yplot
     logcdf_conditionals,logpdf_joints = predict_copula_density(copula_density_obj,y_plot)
     pdf_cop = jnp.exp(logpdf_joints[:,-1])
@@ -42,18 +47,17 @@ def run_copula_algo(y):
 import sys
 
 # Read command-line arguments
-#i = sys.argv[1]  # First argument
-i=1
+i = sys.argv[1]  # First argument
+#i=1
+n=200
 
-y = np.loadtxt("data/data.csv", delimiter=",", dtype=str)[1:]
+filename = f"data/data_n{n}_{i}.csv"
+y = np.loadtxt(filename, delimiter=",", dtype=str)
 y=y.astype(np.float32)
 y=y.reshape(-1,1)
 n = y.shape[0]
 
-M=100
-B=100
-
 
 logcdf_conditionals_pr,logpdf_joints_pr = run_copula_algo(y)
-nameout = 'output/out_python_'+str(i)
+nameout = f"output_py/out_python_n{n}_{i}"
 jnp.save(nameout.format(n),logpdf_joints_pr)
