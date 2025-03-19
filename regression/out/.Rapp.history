@@ -1,0 +1,4 @@
+load("/Users/lorenzo/My Drive/Statistics/almost_cid/acid_paper/regression/out/out_dpmm_g_n_100_1.RData")
+df
+load("/Users/lorenzo/My Drive/Statistics/almost_cid/acid_paper/regression/out/out_gp_g_n_100_1.RData")
+df

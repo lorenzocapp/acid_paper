@@ -1,0 +1,512 @@
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+#f_y_given_x <- f_xy / f_x
+#f_y_given_x <- f_xy / matrix(f_x, nrow = length(f_x), ncol = length(y_grid), byrow = FALSE)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+#E_Y_given_X <- rowSums(f_y_given_x * y_grid) * dy
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+return(E_Y_given_X)
+})
+)
+a <- reg_means - save
+a
+i <- 1
+plot(Xtest,save[,i])
+lines(Xtest,reg_means[,i])
+# Sample with MCMC
+n_samples = 3 #3000 for timing
+g0Priors <- list(mu0 = rep_len(0, length.out = ncol(z)),
+Lambda = diag(ncol(z)), kappa0 = ncol(z), nu = ncol(z))
+dp <- DirichletProcessMvnormal(z,g0Priors = g0Priors)
+system.time(dp <- Fit(dp, n_samples))
+n_plot = 40
+y_grid = seq(min(c(ytrain,ytest)),max(c(ytrain,ytest)),length.out = n_plot)
+dy = y_grid[2] - y_grid[1]
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Sample from DP posterior
+sapply(Xtest, function(x) {
+# Compute joint density f(x, y) for all y
+f_xy <- dp_sample(cbind(rep(x, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+})
+}))
+save <- reg_means
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+#f_y_given_x <- f_xy / f_x
+#f_y_given_x <- f_xy / matrix(f_x, nrow = length(f_x), ncol = length(y_grid), byrow = FALSE)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+#E_Y_given_X <- rowSums(f_y_given_x * y_grid) * dy
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+return(E_Y_given_X)
+})
+)
+a <- reg_means - save
+View(a)
+i <- 1
+plot(Xtest,save[,i])
+lines(Xtest,reg_means[,i])
+dp_sample <- PosteriorFunction(dp)  # Sample from DP posterior
+sapply(Xtest, function(x) {
+# Compute joint density f(x, y) for all y
+f_xy <- dp_sample(cbind(rep(x, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+}
+sapply(Xtest, function(x) {
+sapply(Xtest, function(x) {
+# Compute joint density f(x, y) for all y
+f_xy <- dp_sample(cbind(rep(x, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+}
+plot(Xtest,save[,i],type="l")
+i <- 1
+plot(Xtest,save[,i],type="l")
+lines(Xtest,reg_means[,i])
+i <- 3
+plot(Xtest,save[,i],type="l")
+lines(Xtest,reg_means[,i])
+c(dp_sample(cbind(rep(0, length(y_grid)), y_grid)))
+f_xy <- dp_sample(cbind(rep(0, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+reg_means
+dy
+y_test[2]-y_test[1]
+ytest[2]-ytest[1]
+y_grid[2]-y_grid[1]
+rm(list=ls())
+library(dirichletprocess)
+library(laGP)
+#data
+idx <- 1
+n <- 100
+#data
+idx <- 2
+n <- 100
+t <- "g"
+#Load data set
+train <- read.csv(paste("data_train/data_train_",t,"_n_",n,"_",idx,".csv",sep=""),sep = ",",header = FALSE)
+test <- read.csv(paste("data_test/data_test_",t,"_n_",n,"_",idx,".csv",sep=""),sep = ",",header = FALSE)
+#Put variables in the required format
+#Data
+ytrain <- train[,1]
+Xtrain <- train[,2]
+data <- cbind(ytrain,Xtrain)
+#test
+ytest <- test[,1]
+Xtest <- matrix(test[,2],ncol=1)
+mXtest <- test[,3]
+########################
+######## DP ############
+########################
+z <- cbind(Xtrain,ytrain)
+# Sample with MCMC
+n_samples = 3 #3000 for timing
+# Sample with MCMC
+n_samples = 1 #3000 for timing
+g0Priors <- list(mu0 = rep_len(0, length.out = ncol(z)),
+Lambda = diag(ncol(z)), kappa0 = ncol(z), nu = ncol(z))
+dp <- DirichletProcessMvnormal(z,g0Priors = g0Priors)
+system.time(dp <- Fit(dp, n_samples))
+n_plot = 40
+y_grid = seq(min(c(ytrain,ytest)),max(c(ytrain,ytest)),length.out = n_plot)
+dy = y_grid[2] - y_grid[1]
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Sample from DP posterior
+sapply(Xtest, function(x) {
+# Compute joint density f(x, y) for all y
+f_xy <- dp_sample(cbind(rep(x, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+})
+}))
+save <- reg_means
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+return(E_Y_given_X)
+})
+)
+a <- reg_means - save
+a
+plot(Xtest,save)
+lines(Xtest,reg_means)
+? replicate
+PosteriorFunction(dp,1)
+PosteriorFunction(dp)
+dp_sample <- PosteriorFunction(dp)  # Sample from DP posterior
+dp_sample
+dp_sample(0,1)
+dp_sample(0)
+f_xy <- dp_sample(cbind(rep(0, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+E_Y_given_X
+E_Y_given_X[1]
+f_xy <- dp_sample(cbind(rep(2, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+E_Y_given_X[2]
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+Xtest[2]
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(Xtest[2], length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+f_xy <- dp_sample(cbind(rep(0.05, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+View(xy_pairs)
+E_Y_given_X[2]
+save
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Sample from DP posterior
+sapply(Xtest, function(x) {
+# Compute joint density f(x, y) for all y
+f_xy <- dp_sample(cbind(rep(x, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+})
+}))
+reg_means
+save <- reg_means
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+return(E_Y_given_X)
+})
+)
+reg_means
+f_xy <- dp_sample(cbind(rep(0, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+E_Y_given_X[1]
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+dp1 <- PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+dim(f_xy)
+f_xy[,1]
+f_xy[1,]
+dp2 <- matrix(PosteriorFunction(dp,1)(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+dim(dp_2)
+dim(dp2)
+dp2-f_xy
+dp2 <- matrix(PosteriorFunction(dp,1)(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+dp2[,1]
+dp2[1,]
+dp1
+dim(dp2)
+as.matrix(xy_pairs)
+dp2 <- matrix(PosteriorFunction(dp,1)(as.matrix(xy_pairs)[1:100,]), nrow = length(Xtest), byrow = TRUE)
+dp2
+as.matrix(xy_pairs)[1:100,]
+as.matrix(xy_pairs)[1:40,]
+as.matrix(xy_pairs)[1:40,]
+cbind(rep(0, length(y_grid))
+, y_grid)
+dp1 <- PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+dp2 <- matrix(PosteriorFunction(dp,1)(as.matrix(xy_pairs)[1:40,]), nrow = length(Xtest), byrow = TRUE)
+dp2 <- matrix(PosteriorFunction(dp,1)(as.matrix(xy_pairs)[1:40,]), nrow = 40, byrow = TRUE)
+dp1
+dp2
+dp2 <- PosteriorFunction(dp,1)(as.matrix(xy_pairs)[1:40,])
+dp2
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+(cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+PosteriorFunction(dp,1) (cbind(rep(0, length(y_grid)), y_grid))
+n_plot = 400
+y_grid = seq(min(c(ytrain,ytest)),max(c(ytrain,ytest)),length.out = n_plot)
+dy = y_grid[2] - y_grid[1]
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Sample from DP posterior
+sapply(Xtest, function(x) {
+# Compute joint density f(x, y) for all y
+f_xy <- dp_sample(cbind(rep(x, length(y_grid)), y_grid))
+# Estimate marginal f(x) (integrate over all y)
+f_x <- sum(f_xy) * (y_grid[2] - y_grid[1])  # Approximate integral
+# Compute conditional density f(y | x)
+f_y_given_x <- f_xy / f_x
+# Compute conditional expectation E[Y | X=x]
+sum(y_grid * f_y_given_x) * (y_grid[2] - y_grid[1])
+})
+}))
+save <- reg_means
+system.time(
+reg_means <- replicate(n_samples, {
+dp_sample <- PosteriorFunction(dp)  # Get function for posterior samples
+# Create matrix of test points (Xtest, y_grid)
+xy_pairs <- cbind(rep(Xtest, each = n_plot), rep(y_grid, times = length(Xtest)))
+# Evaluate f(x, y) for all test pairs
+f_xy <- matrix(dp_sample(as.matrix(xy_pairs)), nrow = length(Xtest), byrow = TRUE)
+# Compute marginal f(x) by integrating over y
+f_x <- rowSums(f_xy) * dy
+# Compute conditional density f(y | x)
+f_y_given_x <- sweep(f_xy, 1, f_x, "/")
+# Compute conditional expectation E[Y | X=x]
+E_Y_given_X <- rowSums(f_y_given_x * matrix(y_grid, nrow = length(Xtest), ncol = length(y_grid), byrow = TRUE)) * dy
+return(E_Y_given_X)
+})
+)
+q2.5 <- apply(data.frame(reg_means), 2, quantile, probs=0.025)
+q97.5 <- apply(data.frame(reg_means), 2, quantile, probs=0.975)
+q50 <- apply(data.frame(reg_means), 2, quantile, probs=0.5)
+mean <- apply(data.frame(reg_means), 2, mean)
+posterior <- list(grid=grid,mean=mean,q2.5=q2.5,q97.5=q97.5,q50=q50)
+n_plot = 40
+y_grid = seq(min(c(ytrain,ytest)),max(c(ytrain,ytest)),length.out = n_plot)
+# Sample with MCMC
+n_samples = 1000 #3000 for timing
+g0Priors <- list(mu0 = rep_len(0, length.out = ncol(z)),
+Lambda = diag(ncol(z)), kappa0 = ncol(z), nu = ncol(z))
+dp <- DirichletProcessMvnormal(z,g0Priors = g0Priors)
+system.time(dp <- Fit(dp, n_samples))

@@ -1,0 +1,203 @@
+---
+title: 'Acid paper analysis'
+author: "Lorenzo Cappello"
+output:
+  html_document:
+    df_print: paged
+---
+
+Tidyverse Packages:
+- dplyr (Data manipulation)
+- ggplot2 (Plotting)
+- tibble (Reimagined Data frames)
+- tidyr ("Tidy" data)
+- purrr (Functional Programming)
+- readr (Reading data)
+- stringr (Strings)
+- forcats (Factors)
+
+and a few more... I'll mainly cover `dplyr`, which has the data manipulation functions.  The most influential ones are `dplyr` and `ggplot2`.
+
+
+Most of the following is adapted from the `dplyr` tutorial [here](https://genomicsclass.github.io/book/pages/dplyr_tutorial.html), by Rafael Irizarry and Michael Love.
+
+
+```{r}
+if(!"tidyverse" %in% installed.packages()) install.packages("tidyverse")
+library(tidyverse)
+library(dplyr)
+```
+
+We first import data to play with:
+"summary_varcp_11-2.rda" is the one for the paper Table 1
+
+```{r}
+
+#My guess is that he paper is based on summary_varcp_3-23-23.rda
+load("run1/summary_acid.rda")
+d <- a$d
+
+d[,4:7] <- d %>% select(env:dev) %>% mutate_if(is.factor,as.character) %>% mutate_if(is.character,as.numeric)
+
+head(d)
+summary(d)
+```
+Looks like there are some awful runs
+```{r}
+idx <- which(d$rwd>10^10)
+head(d[idx,])
+#at least I remove this data =36 for now
+d <- d %>% filter(data != 36)
+```
+
+```{r eval=FALSE}
+
+
+table(d$method)
+```
+
+
+`dplyr` is (mostly) easier to work with, as compared to base R for data manipulation.  
+
+Important `dplyr` verbs to remember:
+*  `select()`:    select columns
+*  `filter()`:    filter rows
+*  `arrange()`:   re-order / arrange rows
+*  `mutate()`:    create new columns
+*  `summarise()`: summarise values
+*  `group_by()`:  allows for group operations in the "split-apply-combine" concept
+
+
+
+
+Start doing some checks on the first two measures
+
+```{r}
+
+r1 <- d %>% select(method,env,dev,rwd,bias,n) %>% group_by(n,method) %>% summarise_all(.funs = c(sum="mean"))
+r1
+```
+```{r}
+ggplot(d, aes(x = method, y = env)) +
+  geom_violin(trim = FALSE) +  # Violin plot
+  geom_jitter(width = 0.2, color = "blue", alpha = 0.6) +  # Jittered points
+  geom_boxplot(width = 0.1, color = "black", outlier.shape = NA, alpha = 0.3) +  facet_wrap(~n) + # Boxplot
+  theme(axis.text.x = element_text(angle = 90, hjust = 1)) 
+
+```
+
+
+```{r,warning=FALSE}
+r <-d %>% select(method,env,dev,rwd,bias,n) %>% group_by(method,n) %>% summarise_all(.funs = c(med="median"))
+r
+```
+
+
+
+
+Summary
+
+```{r}
+sum <- r %>% left_join(r1)
+#sum <- sum[order(sum$data,sum$T),]
+head(sum)
+
+```
+
+
+sum  %>% ggplot(aes(x=method,y=abs(avg_err)))+geom_bar(stat="identity")+facet_wrap(.~datatype)+ theme(axis.text.x = element_text(angle = 90))+ylim(0,15)
+
+Filter rows that starts with a given character filter(str_detect(datatype, "^block"))
+
+if you want to end wit ha 
+Start working some plots subsetyting the type of dataset 
+```{r}
+type <-1
+
+ 
+#sum  %>% ggplot(aes(x=method,y=dev_med))+geom_bar(stat="identity")+ theme(axis.text.x = element_text(angle = 90))
+
+# Convert data to long format
+sum_long <- sum %>% filter(n==50) %>%
+  pivot_longer(cols = c(dev_med, rwd_med, bias_med, env_med), 
+               names_to = "measure", 
+               values_to = "value")
+
+# Create faceted bar plot
+ggplot(sum_long, aes(x = method, y = value)) +
+  geom_bar(stat = "identity") +
+  facet_wrap(~measure, scales = "free_y") +  # Separate panels for each measure
+  theme(axis.text.x = element_text(angle = 90, hjust = 1))
+
+
+```
+Table studying coverage 
+
+
+```{r}
+type <-"prisca"
+ 
+table <- sum  %>% filter(data=="2")  %>% filter(str_detect(method, type)) %>%  select(T,method,avg.cov.9,
+,avg.cond.cov.9, avg.cov.inter.9,avg.new.cond.cov.9)
+
+```
+Compare epsilon convergence
+
+```{r}
+tableeps <- sum %>% filter(data=="1") %>% filter (method %in% c("prisca-eps-0.001-nodelta","prisca-eps-0.1-nodelta","prisca-trueL-eps-0.1-nodelta", "prisca-trueL-eps-0.001","autoprisca-eps-0.001nodelta","autoprisca-eps-0.1nodelta")) %>% select (T,method,avg_err,avg.haus.dir2,avg.time,avg.length,avg.cond.cov.9)
+
+tableeps <- tableeps[,-1]
+tableeps[,3:7] <- round(tableeps[,3:7], 2)
+#tablebottle <- tablebottle[,-12]
+#tablebottle[,11] <- -tablebottle[,11]
+head(tableeps)
+```
+
+
+
+Compare mcp methods 
+
+```{r}
+tablemcp <- sum %>% filter(data=="1") %>% filter (grepl('mcp', method)) %>% select (T,method,avg_err,avg.haus.dir2,avg.time,avg.length,avg.cond.cov.9)
+
+tablemcp <- tablemcp[,-1]
+tablemcp[,3:7] <- round(tablemcp[,3:7], 2)
+#tablebottle <- tablebottle[,-12]
+#tablebottle[,11] <- -tablebottle[,11]
+head(tablemcp)
+```
+
+Now, let's reduce the table and prepare the tables
+This one is for the main text
+Debatable choice
+```{r}
+tablebottle <- sum %>% filter(data=="1") %>% filter (method %in% c("prisca-eps-0.1-nodelta", "prisca-trueL-eps-0.1-nodelta","autoprisca-eps-0.1nodelta", "pelt","binSeg","segNeigh","mcp-iter2000","mcp-iter3000","mcp-iter4000")) %>% select (T,method,avg_err,avg.haus.dir2,avg.time,avg.length,avg.cov.inter.9)
+
+#tablebottle <- tablebottle[,-1]
+tablebottle <- tablebottle[-c(2,10),]
+tablebottle$method <- as.character(tablebottle$method)
+tablebottle$method[tablebottle$method=="prisca-trueL-eps-0.1-nodelta"] <- "ora-PRISCA"
+tablebottle$method[tablebottle$method=="autoprisca-eps-0.1nodelta"] <- "auto-PRISCA"
+tablebottle$method[tablebottle$method=="prisca-eps-0.1-nodelta"] <- "PRISCA"
+tablebottle$method[tablebottle$method=="pelt"] <- "PELT"
+tablebottle$method[tablebottle$method=="binSeg"] <- "BINSEG"
+tablebottle$method[tablebottle$method=="segNeigh"] <- "SEGNEI"
+tablebottle$method[tablebottle$method=="mcp-iter2000"] <- "MCP"
+tablebottle$method[tablebottle$method=="mcp-iter3000"] <- "MCP"
+tablebottle$method[tablebottle$method=="mcp-iter4000"] <- "MCP"
+tablebottle[,3:7] <- round(tablebottle[,3:7], 2)
+#tablebottle <- tablebottle[,-12]
+#tablebottle[,11] <- -tablebottle[,11]
+head(tablebottle)
+```
+
+
+Print these for the latex 
+```{r}
+library(stargazer)
+tablebottle$T <- as.character(tablebottle$T)
+tablebottle$method <- as.character(tablebottle$method)
+colnames(tablebottle) <- c( "T","method", "error" ,"haus","avg.time", "length" ,"conditional cov")
+stargazer(tablebottle, summary=FALSE, rownames=FALSE)
+
+```
